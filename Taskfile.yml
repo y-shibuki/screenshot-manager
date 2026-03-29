@@ -1,0 +1,86 @@
+version: '3'
+
+tasks:
+  dev:
+    desc: Vite dev server + Uvicorn を並行起動（開発用）
+    deps: [fe:dev, be:dev]
+
+  fe:dev:
+    desc: Vite dev server を起動する
+    cmds:
+      - npm run dev
+
+  be:dev:
+    desc: Uvicorn を --reload で起動する
+    dir: backend
+    cmds:
+      - uv run uvicorn app.main:app --host 127.0.0.1 --port 5001 --reload
+
+  start:
+    desc: Uvicorn のみ起動（本番用、Viteビルド済み前提）
+    dir: backend
+    cmds:
+      - uv run uvicorn app.main:app --host 127.0.0.1 --port 5001
+
+  build:
+    desc: Vite でフロントエンドをビルド
+    cmds:
+      - npm run build
+
+  install:
+    desc: Python + Node.js の依存を一括インストール
+    deps: [be:install, fe:install]
+
+  fe:install:
+    desc: npm install を実行する
+    cmds:
+      - npm install
+
+  be:install:
+    desc: uv sync を実行する
+    dir: backend
+    cmds:
+      - uv sync
+
+  fe:lint:
+    desc: ESLint を実行する
+    cmds:
+      - npm run lint
+
+  be:lint:
+    desc: ruff check を実行する
+    dir: backend
+    cmds:
+      - uv run ruff check .
+
+  be:fmt:
+    desc: ruff format を実行する
+    dir: backend
+    cmds:
+      - uv run ruff format .
+
+  be:test:
+    desc: pytest を実行する
+    dir: backend
+    cmds:
+      - uv run pytest
+
+  lint:
+    desc: fe:lint + be:lint を実行する
+    deps: [fe:lint, be:lint]
+
+  test:
+    desc: be:test を実行する
+    deps: [be:test]
+
+  db:migrate:
+    desc: Alembic マイグレーションを実行する
+    dir: backend
+    cmds:
+      - uv run alembic upgrade head
+
+  db:revision:
+    desc: Alembic リビジョンを作成する
+    dir: backend
+    cmds:
+      - uv run alembic revision --autogenerate -m "{{.CLI_ARGS}}"
