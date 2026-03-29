@@ -110,6 +110,15 @@ export function ImageGrid({ folderPath, onChangeFolder }: Props) {
               ? () => setPreviewIndex((i) => (i ?? -1) + 1)
               : undefined
           }
+          onDelete={async (path) => {
+            const len = images.length
+            await deleteImage(path)
+            if (len === 1) {
+              setPreviewIndex(null)
+            } else if (previewIndex >= len - 1) {
+              setPreviewIndex(len - 2)
+            }
+          }}
         />
       )}
     </div>

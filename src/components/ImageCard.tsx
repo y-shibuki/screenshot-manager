@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 import type { ImageFile } from '@/types'
 
 type Props = {
@@ -11,12 +12,11 @@ type Props = {
 
 export function ImageCard({ image, onDelete, onClick }: Props) {
   const [showActions, setShowActions] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (confirm(`「${image.name}」をゴミ箱に移動しますか？`)) {
-      onDelete(image.path)
-    }
+    setShowConfirm(true)
   }
 
   return (
@@ -46,6 +46,13 @@ export function ImageCard({ image, onDelete, onClick }: Props) {
         >
           <Trash2 className="w-4 h-4" />
         </button>
+      )}
+      {showConfirm && (
+        <DeleteConfirmDialog
+          fileName={image.name}
+          onConfirm={() => { setShowConfirm(false); onDelete(image.path) }}
+          onCancel={() => setShowConfirm(false)}
+        />
       )}
     </div>
   )
