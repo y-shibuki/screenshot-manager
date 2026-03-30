@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Check, FolderOpen, Grip, Grid3X3, LayoutGrid, RefreshCw, X } from 'lucide-react'
+import { Check, FolderOpen, Grip, Grid3X3, LayoutGrid, RefreshCw, Trash2, X } from 'lucide-react'
 import { ImageCard } from './ImageCard'
 import { ImagePreview } from './ImagePreview'
+import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 import { useImages } from '@/hooks/useImages'
 import type { ImageFile } from '@/types'
 
@@ -16,6 +17,11 @@ export function ImageGrid({ folderPath, onChangeFolder }: Props) {
   const [editingPath, setEditingPath] = useState(false)
   const [newPath, setNewPath] = useState('')
   const [gridSize, setGridSize] = useState<'large' | 'medium' | 'small'>('medium')
+  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set())
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+
+  const isSelectMode = selectedPaths.size > 0
 
   const gridCols = {
     large: 'grid-cols-3',
@@ -26,6 +32,49 @@ export function ImageGrid({ folderPath, onChangeFolder }: Props) {
   useEffect(() => {
     refresh()
   }, [refresh])
+
+  const handleCardClick = (image: ImageFile, index: number, e: React.MouseEvent) => {
+    if (e.shiftKey) {
+      e.preventDefault()
+      if (lastSelectedIndex !== null && selectedPaths.size > 0) {
+        const start = Math.min(lastSelectedIndex, index)
+        const end = Math.max(lastSelectedIndex, index)
+        const newSelected = new Set(selectedPaths)
+        for (let i = start; i <= end; i++) {
+          newSelected.add(images[i].path)
+        }
+        setSelectedPaths(newSelected)
+      } else {
+        setSelectedPaths(new Set([image.path]))
+      }
+      setLastSelectedIndex(index)
+    } else if (isSelectMode) {
+      const newSelected = new Set(selectedPaths)
+      if (newSelected.has(image.path)) {
+        newSelected.delete(image.path)
+      } else {
+        newSelected.add(image.path)
+        setLastSelectedIndex(index)
+      }
+      setSelectedPaths(newSelected)
+    } else {
+      setPreviewIndex(index)
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    for (const path of [...selectedPaths]) {
+      await deleteImage(path)
+    }
+    setSelectedPaths(new Set())
+    setLastSelectedIndex(null)
+    setShowBulkDeleteConfirm(false)
+  }
+
+  const clearSelection = () => {
+    setSelectedPaths(new Set())
+    setLastSelectedIndex(null)
+  }
 
   const handleChangeFolderSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,6 +110,26 @@ export function ImageGrid({ folderPath, onChangeFolder }: Props) {
               <X className="w-4 h-4" />
             </button>
           </form>
+        ) : isSelectMode ? (
+          <>
+            <span className="text-sm font-medium text-blue-600">{selectedPaths.size}件選択中</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setShowBulkDeleteConfirm(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                削除
+              </button>
+              <button
+                onClick={clearSelection}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-neutral-100 hover:bg-neutral-200 rounded-md transition-colors"
+              >
+                <X className="w-4 h-4" />
+                選択解除
+              </button>
+            </div>
+          </>
         ) : (
           <>
             <div className="flex items-center gap-2 text-sm text-neutral-500 truncate min-w-0">
@@ -116,8 +185,10 @@ export function ImageGrid({ folderPath, onChangeFolder }: Props) {
             <ImageCard
               key={image.path}
               image={image}
+              isSelected={selectedPaths.has(image.path)}
+              isSelectMode={isSelectMode}
               onDelete={deleteImage}
-              onClick={() => setPreviewIndex(index)}
+              onClick={(img, e) => handleCardClick(img, index, e)}
             />
           ))}
         </div>
@@ -142,6 +213,14 @@ export function ImageGrid({ folderPath, onChangeFolder }: Props) {
               setPreviewIndex(len - 2)
             }
           }}
+        />
+      )}
+
+      {showBulkDeleteConfirm && (
+        <DeleteConfirmDialog
+          fileName={`${selectedPaths.size}件の画像`}
+          onConfirm={handleBulkDelete}
+          onCancel={() => setShowBulkDeleteConfirm(false)}
         />
       )}
     </div>

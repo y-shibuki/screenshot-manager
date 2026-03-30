@@ -1,16 +1,18 @@
 import { useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Check, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DeleteConfirmDialog } from './DeleteConfirmDialog'
 import type { ImageFile } from '@/types'
 
 type Props = {
   image: ImageFile
+  isSelected?: boolean
+  isSelectMode?: boolean
   onDelete: (path: string) => void
-  onClick: (image: ImageFile) => void
+  onClick: (image: ImageFile, e: React.MouseEvent) => void
 }
 
-export function ImageCard({ image, onDelete, onClick }: Props) {
+export function ImageCard({ image, isSelected, isSelectMode, onDelete, onClick }: Props) {
   const [showActions, setShowActions] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
@@ -23,20 +25,28 @@ export function ImageCard({ image, onDelete, onClick }: Props) {
     <div
       className={cn(
         'relative group cursor-pointer rounded-lg overflow-hidden bg-neutral-100',
-        'border border-neutral-200 hover:border-neutral-400 transition-all',
+        'border-2 transition-all',
+        isSelected
+          ? 'border-blue-500'
+          : 'border-neutral-200 hover:border-neutral-400',
       )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
-      onClick={() => onClick(image)}
+      onClick={(e) => onClick(image, e)}
     >
+      {isSelected && (
+        <div className="absolute top-2 left-2 z-10 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+          <Check className="w-3 h-3 text-white" strokeWidth={3} />
+        </div>
+      )}
       <img
         src={image.thumb_url}
         alt={image.name}
-        className="w-full"
+        className={cn('w-full', isSelected && 'opacity-80')}
         loading="lazy"
       />
       <div className="px-2 py-1.5 text-xs text-neutral-600 truncate">{image.name}</div>
-      {showActions && (
+      {showActions && !isSelectMode && (
         <button
           onClick={handleDelete}
           className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-red-600 text-white rounded-md transition-colors"
