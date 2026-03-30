@@ -29,14 +29,12 @@ export function ImageCard({ image, onDelete, onClick }: Props) {
       onMouseLeave={() => setShowActions(false)}
       onClick={() => onClick(image)}
     >
-      <div className="aspect-video w-full overflow-hidden">
-        <img
-          src={image.thumb_url}
-          alt={image.name}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
-      </div>
+      <img
+        src={image.thumb_url}
+        alt={image.name}
+        className="w-full"
+        loading="lazy"
+      />
       <div className="px-2 py-1.5 text-xs text-neutral-600 truncate">{image.name}</div>
       {showActions && (
         <button

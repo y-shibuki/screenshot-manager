@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Check, FolderOpen, RefreshCw, X } from 'lucide-react'
+import { Check, FolderOpen, Grip, Grid3X3, LayoutGrid, RefreshCw, X } from 'lucide-react'
 import { ImageCard } from './ImageCard'
 import { ImagePreview } from './ImagePreview'
 import { useImages } from '@/hooks/useImages'
@@ -15,6 +15,13 @@ export function ImageGrid({ folderPath, onChangeFolder }: Props) {
   const [previewIndex, setPreviewIndex] = useState<number | null>(null)
   const [editingPath, setEditingPath] = useState(false)
   const [newPath, setNewPath] = useState('')
+  const [gridSize, setGridSize] = useState<'large' | 'medium' | 'small'>('medium')
+
+  const gridCols = {
+    large: 'grid-cols-3',
+    medium: 'grid-cols-5',
+    small: 'grid-cols-8',
+  }[gridSize]
 
   useEffect(() => {
     refresh()
@@ -62,6 +69,22 @@ export function ImageGrid({ folderPath, onChangeFolder }: Props) {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-sm text-neutral-400">{images.length}件</span>
+              <div className="flex items-center border border-neutral-200 rounded-md overflow-hidden">
+                {([
+                  { size: 'large', icon: LayoutGrid, title: '大' },
+                  { size: 'medium', icon: Grid3X3, title: '中' },
+                  { size: 'small', icon: Grip, title: '小' },
+                ] as const).map(({ size, icon: Icon, title }) => (
+                  <button
+                    key={size}
+                    onClick={() => setGridSize(size)}
+                    title={title}
+                    className={`p-1.5 transition-colors ${gridSize === size ? 'bg-neutral-800 text-white' : 'hover:bg-neutral-100 text-neutral-600'}`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </button>
+                ))}
+              </div>
               <button
                 onClick={refresh}
                 disabled={loading}
@@ -88,7 +111,7 @@ export function ImageGrid({ folderPath, onChangeFolder }: Props) {
         {!loading && images.length === 0 && !error && (
           <div className="text-center text-neutral-400 mt-20">画像が見つかりません</div>
         )}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        <div className={`grid ${gridCols} gap-3`}>
           {images.map((image: ImageFile, index: number) => (
             <ImageCard
               key={image.path}
